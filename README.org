@@ -1,0 +1,41 @@
+**** Description
+This is a work in progress template for the Templater Plugin within ObsidianMD. It's job to to track daily activities as seen [[https://ohm.one/how-to-track-your-every-single-minute/][here]].
+
+**** Status
+The script currently works, but has yet to be configured appropiately for the average user. Expect users and idiosyncrasies.
+
+**** Prerequisites 
+- ObsidianMD 
+- Templater (with a defined templates folder)
+- Daily Notes (built-in)
+
+****  Setup
+1. Copy the template.md into your Templater directory
+2. (Optional) Edit =dailyNotePathSchema= variable to match your Daily Note configuration
+   By default it's set to =[Logs]/YYYY/MM - MMMM (Y)/Y-MM-DD[.md]= which is equivalent to setting Daily Notes to the following:
+   - Date Format: YYYY/MM \-\ MMMM \(Y\)/Y-MM-DD
+   - New File Location: "Logs"
+
+   The brackets (=[]=) around =Logs= and =.md= are to escape the text from processing. Use this syntax to reference folders or non-date-related formats. 
+3. Define a "workflow" directory
+   In this directory, every file will be treated as a workflow for you to select from. Additionally, you can set default attribute fields with the =attributes= frontmatter array variable.
+4. Add metadata to your daily note (see =dailyNote.md= for example)
+   Each daily note will require the following:
+   - workflow_path: a string containing your workflow directory (i.e, "%%, "%/Workflow", "%/Work")
+   - activity_regex: a regex pattern for parsing (
+     Set this to the following unless you know what you're doing):
+     #+begin_src regex
+       - #(\\S+) (==\\d\\d:\\d\\d==-==\\d\\d:\\d\\d==) (\\(.{0,2}\\s+.*\\)+)\\s+\\^id-(\\d{1,})\\n\\s- :PROPERTIES:\\n\\s\\s- :BEGAN: (\\d{10}|#BEG)\\n\\s\\s- :ENDED: (\\d{10}|#END)(?:\\n\\s- (.*))?((?:\\n\\s{2,}- .*)*)?
+     #+end_src
+   - activity_group_matchings: a list of variables to save the matches regex groups to
+     Set this to the following if you're using the above regex:
+       - raw
+       - emoji
+       - time
+       - workflow_metadata
+       - id
+       - begin_time
+       - end_time
+       - notes
+       - extra_notes 
+5. And try it out by running the template 
