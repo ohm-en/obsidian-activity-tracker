@@ -23,7 +23,7 @@
 export default {
   input: "src/main.js",
   output: {
-    file: "dist/TrackActivities.md",
+    file: "examples/template.md",
     format: "cjs",
     banner: "<%-*",
     footer: "_%>",

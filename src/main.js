@@ -1,3 +1,4 @@
+// TODO: require timeline helper as dependancy
 import { parseTimeline } from "../../obsidian-daily-log-helper/src/text_processing.js";
 
 const dailyNotePathSchema = "[Logs]/YYYY/MM - MMMM (Y)/Y-MM-DD[.md]";

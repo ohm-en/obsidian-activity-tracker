@@ -10,19 +10,12 @@ function assert(condition, message) {
 const extract_activities = function ({
   from: timeline_text,
   activity_regex,
-  activity_group_matchings,
   date,
 }) {
   const regex_iterator = timeline_text.matchAll(activity_regex);
   let activities = [];
   for (const match of regex_iterator) {
-    const current_activity = {};
-
-    match.forEach(function (group, index) {
-      if (activity_group_matchings[index]) {
-        current_activity[activity_group_matchings[index]] = group;
-      }
-    });
+    const current_activity = match.groups || {};
 
     assert(
       current_activity.id,
@@ -60,7 +53,7 @@ const extract_activities = function ({
       ? current_activity.end_time - current_activity.begin_time
       : undefined;
 
-    workflowM = {
+    const workflowM = {
       date,
       workspace,
       workflow,
@@ -75,43 +68,32 @@ const extract_activities = function ({
     activities.push({ ...current_activity, ...workflowM });
   }
 
-  // const count_of_parsed = activities.length;
-  // if (timeline.count === undefined) {
-  //   console.error(`${date}: Missing the currentId field.`);
-  // } else if (count != count_of_parsed) {
-  //   const listed_ids = activities.map(function (activity) {
-  //     return activity.id;
-  //   });
-  //   // NOTE: FIXME
-  //   let missing_ids = [];
-  //   for (let i = 1; i < count_of_parsed; i++) {
-  //     if (!listed_ids.includes(i)) {
-  //       missing_ids.push(i);
-  //     }
-  //   }
-  //   console.error(
-  //     `${date}: Expected to find ${
-  //       count
-  //     } activities, but instead found ${count_of_parsed}. Missing IDs: ${
-  //       missing_ids.join(", ") || "none"
-  //     }.`
-  //   );
-  // }
+  const listed_ids = activities.map((activity) => parseInt(activity.id));
+  const expected_ids = Array.from(
+    { length: activities.length },
+    (_, i) => i + 1
+  );
+
+  const missing_ids = expected_ids.filter((id) => !listed_ids.includes(id));
+
+  if (missing_ids.length > 0) {
+    console.error(
+      `${date}: Expected to find ${
+        expected_ids.length
+      } activities, but instead found ${
+        expected_ids.length - missing_ids.length
+      }. Missing IDs: ${missing_ids.join(", ") || "none"}.`
+    );
+  }
 
   return activities;
 };
 
-const parseTimeline = function ({
-  from: timeline_text,
-  activity_regex,
-  activity_group_matchings,
-  date,
-}) {
+const parseTimeline = function ({ from: timeline_text, activity_regex, date }) {
   // const timeline_text = extract_timeline_from_header(header, text);
   const activities = extract_activities({
     from: timeline_text,
     activity_regex,
-    activity_group_matchings,
     date,
   });
 
@@ -185,7 +167,21 @@ const parse_variables = function (text) {
   return variables;
 };
 
+// TODO: require timeline helper as dependancy
+
 const dailyNotePathSchema = "[Logs]/YYYY/MM - MMMM (Y)/Y-MM-DD[.md]";
+
+function splitOnFrontMatter({ from: text }) {
+  const regex = /(?<yaml>^---\s*[\s\S]*?---[ 	]*)/;
+  const match = text.match(regex);
+  if (match) {
+    const yaml = match[1];
+    const restOfContent = text.replace(regex, "");
+    return [yaml, restOfContent];
+  }
+
+  return ["", text];
+}
 
 const getTFile = function ({ from: filePath }) {
   const tFile = app.vault.getAbstractFileByPath(filePath);
@@ -215,8 +211,12 @@ const getDailyNote = async function ({ from_date = moment() }) {
     await app.vault.modify(tFile, newContent);
   };
 
+  const process = async function (callback) {
+    return app.vault.process(tFile, callback);
+  };
+
   const refresh = async function () {
-    text = await app.vault.cachedRead(tFile);
+    text = await app.vault.read(tFile);
   };
 
   await refresh();
@@ -225,6 +225,7 @@ const getDailyNote = async function ({ from_date = moment() }) {
     name: tFile.basename,
     text,
     yaml,
+    process,
     refresh,
     append,
     modify,
@@ -290,104 +291,129 @@ const createNewActivity = async function ({ id, workflows }) {
 };
 
 const main = async function () {
-  const dailyNote = await getDailyNote({});
-  const { activity_group_matchings, workflow_path } = dailyNote.yaml;
+  try {
+    const dailyNote = await getDailyNote({});
+    const {
+      workflow_path,
+      time_start_placeholder_tag,
+      time_stop_placeholder_tag,
+    } = dailyNote.yaml;
 
-  const activity_regex = new RegExp(dailyNote.yaml.activity_regex, "g");
-  if (!workflow_path || !activity_regex || !activity_group_matchings) {
-    new Notice(
-      "Please define workflow_path, activity_regex and activity_group_matchings in your daily note."
-    );
-    return;
-  }
+    // TODO: assert require configruation fields
 
-  const todaysTimeline = parseTimeline({
-    from: dailyNote.text,
-    activity_regex,
-    activity_group_matchings,
-    date: dailyNote.name, // TODO: date may not always be shared!
-  });
+    const activity_regex = new RegExp(dailyNote.yaml.activity_regex, "g");
+    if (!workflow_path || !activity_regex) {
+      new Notice(
+        "Please define workflow_path, activity_regex and activity_group_matchings in your daily note."
+      );
+      return;
+    }
 
-  const workflows = await getWorkflows({
-    from: workflow_path,
-  });
-
-  // TODO: add checks for #END
-  if (!todaysTimeline.activities[0]) {
-    const newActivity = await createNewActivity({ id: 1, workflows });
-    await dailyNote.append({ text: "\n" + newActivity });
-    return;
-  }
-
-  const lastActivityWasCompleted =
-    todaysTimeline.activities[todaysTimeline.activities.length - 1].end_time !=
-    "#END";
-
-  const previousActivity = lastActivityWasCompleted
-    ? todaysTimeline.activities[todaysTimeline.activities.length - 1]
-    : todaysTimeline.activities[todaysTimeline.activities.length - 2] || {};
-
-  if (lastActivityWasCompleted) {
-    const newActivity = await createNewActivity({
-      id: Number(previousActivity.id) + 1,
-      workflows,
-    });
-    await dailyNote.append({ text: "\n" + newActivity });
-  } else {
-    const ongoingActivity =
-      todaysTimeline.activities[todaysTimeline.activities.length - 1];
-    const oneHourAgo = moment().subtract(1, "hours");
-    const hours = oneHourAgo.isBefore(moment.unix(previousActivity.end_time))
-      ? "0"
-      : await promptInput({ label: "Hours: " });
-
-    const minutes = await promptInput({
-      label: "Minutes: ",
+    const todaysTimeline = parseTimeline({
+      from: dailyNote.text,
+      activity_regex,
+      date: dailyNote.name, // TODO: date may not always be shared!
     });
 
-    const identifiers = [
-      "👍", // A Normal Activity
-      "〽️", // Unusual Activity
-      "⭐", // Meaningful Activity
-      "🤬", // Seething Rage
-    ];
+    const { activities } = todaysTimeline;
 
-    const ident = await promptSelection({
-      of: { label: identifiers, value: identifiers },
+    const workflows = await getWorkflows({
+      from: workflow_path,
     });
-    const endMoment = moment();
-    const beginMoment = (function () {
-      // NOTE: This weird syntax creates a clone of the "moment";
-      const begin = moment(endMoment)
-        .subtract(hours, "hours")
-        .subtract(minutes, "minutes");
-      previousActivityEndMoment = moment.unix(previousActivity.end_time);
-      if (
-        begin.clone().subtract(31, "second").isBefore(previousActivityEndMoment)
-      ) {
-        new Notice("Since last Activity. You did it!");
-        return previousActivityEndMoment.add(1, "seconds");
-      } else {
-        return begin;
+
+    if (!activities[0]) {
+      const newActivity = await createNewActivity({ id: 1, workflows });
+      await dailyNote.append({ text: "\n" + newActivity });
+      return;
+    }
+
+    const startPlaceholderTag = "#" + time_start_placeholder_tag.trim();
+    const stopPlaceholderTag = "#" + time_stop_placeholder_tag.trim();
+
+    const incompletedActivities = activities.reduce(function (
+      incompleted,
+      activity
+    ) {
+      if (!activity.end_time || activity.end_time === stopPlaceholderTag) {
+        return [...incompleted, activity];
       }
-    })();
+      return incompleted;
+    },
+    []);
 
-    const completedActivity = ongoingActivity.raw
-      .replace(
-        /#I *==00:00==-==00:00==/,
-        `#${ident} ==${beginMoment.format("HH:mm")}==-==${endMoment.format(
-          "HH:mm"
-        )}==`
-      )
-      .replace(/:BEGAN: #BEG */, `:BEGAN: ${beginMoment.format("X")}`)
-      .replace(/:ENDED: #END */, `:ENDED: ${endMoment.format("X")}`);
+    if (incompletedActivities.length > 1) {
+      throw new Error(
+        "Failure! More than one activity is marked as incomplete!"
+      );
+    }
 
-    const updatedDailyNote = dailyNote.text.replace(
-      ongoingActivity.raw,
-      completedActivity
-    );
+    const isAnyIncompleteActivities = incompletedActivities.length > 0;
+    if (isAnyIncompleteActivities) {
+      const ongoingActivity = activities[activities.length - 1];
+      const previousActivity = activities[activities.length - 2] || {};
+      const oneHourAgo = moment().subtract(1, "hours");
+      const hours = oneHourAgo.isBefore(moment.unix(previousActivity.end_time))
+        ? "0"
+        : await promptInput({ label: "Hours: " });
 
-    await dailyNote.modify({ newContent: updatedDailyNote });
+      const minutes = await promptInput({
+        label: "Minutes: ",
+      });
+
+      const identifiers = [
+        "👍", // A Normal Activity
+        "〽️", // Unusual Activity
+        "⭐", // Meaningful Activity
+        "🤬", // Seething Rage
+      ];
+
+      const ident = await promptSelection({
+        of: { label: identifiers, value: identifiers },
+      });
+      const endMoment = moment();
+      const beginMoment = (function () {
+        // NOTE: This weird syntax creates a clone of the "moment";
+        const begin = moment(endMoment)
+          .subtract(hours, "hours")
+          .subtract(minutes, "minutes");
+        previousActivityEndMoment = moment.unix(previousActivity.end_time);
+        if (
+          begin
+            .clone()
+            .subtract(31, "second")
+            .isBefore(previousActivityEndMoment)
+        ) {
+          new Notice("Since last Activity. You did it!");
+          return previousActivityEndMoment.add(1, "seconds");
+        } else {
+          return begin;
+        }
+      })();
+
+      await dailyNote.process(function (data) {
+        const [yaml, text] = splitOnFrontMatter({ from: data });
+        const newText = text
+          .replace(
+            /#I *==00:00==-==00:00==/,
+            `#${ident} ==${beginMoment.format("HH:mm")}==-==${endMoment.format(
+              "HH:mm"
+            )}==`
+          )
+          .replace(startPlaceholderTag, beginMoment.format("X"))
+          .replace(stopPlaceholderTag, endMoment.format("X"));
+        const newData = yaml + newText;
+        return newData;
+      });
+    } else {
+      const previousActivity = activities[activities.length - 1];
+      const newActivity = await createNewActivity({
+        id: Number(previousActivity.id) + 1,
+        workflows,
+      });
+      await dailyNote.append({ text: "\n" + newActivity });
+    }
+  } catch (error) {
+    new Notice(error);
   }
 };
 
