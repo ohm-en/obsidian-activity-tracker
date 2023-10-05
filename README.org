@@ -1,3 +1,9 @@
+:PROPERTIES:
+:ID:       2244bb8c-b4f1-48f5-90d0-1da009bc8a6c
+:END:
+#+title: Obsidian Timeline Tracker
+
+
 **** Description
 This is a work in progress template for the Templater Plugin within ObsidianMD. It's job to to track daily activities as seen [[https://ohm.one/how-to-track-your-every-single-minute/][here]].
 
