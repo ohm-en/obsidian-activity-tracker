@@ -183,14 +183,21 @@ const main = async function () {
     if (isAnyIncompleteActivities) {
       const ongoingActivity = activities[activities.length - 1];
       const previousActivity = activities[activities.length - 2] || {};
+      const previousActivityEndMoment = moment.unix(previousActivity.end_time);
       const oneHourAgo = moment().subtract(1, "hours");
-      const hours = oneHourAgo.isBefore(moment.unix(previousActivity.end_time))
+      const hours = oneHourAgo.isBefore(previousActivityEndMoment)
         ? "0"
         : await promptInput({ label: "Hours: " });
 
-      const minutes = await promptInput({
-        label: "Minutes: ",
-      });
+      const isHoursWithinLastActivity = moment()
+        .subtract(Number(hours), "hours")
+        .isBefore(previousActivityEndMoment);
+
+      const minutes = isHoursWithinLastActivity
+        ? undefined
+        : await promptInput({
+            label: "Minutes: ",
+          });
 
       const identifiers = [
         "👍", // A Normal Activity
@@ -204,22 +211,24 @@ const main = async function () {
       });
       const endMoment = moment();
       const beginMoment = (function () {
-        // NOTE: This weird syntax creates a clone of the "moment";
+        if (isHoursWithinLastActivity) {
+          new Notice("Last activity ended within inputted hours");
+          return previousActivityEndMoment.add(1, "seconds");
+        }
         const begin = moment(endMoment)
           .subtract(hours, "hours")
-          .subtract(minutes, "minutes");
-        previousActivityEndMoment = moment.unix(previousActivity.end_time);
-        if (
-          begin
-            .clone()
-            .subtract(31, "second")
-            .isBefore(previousActivityEndMoment)
-        ) {
-          new Notice("Since last Activity. You did it!");
+          .subtract(minutes, "minutes")
+          .subtract(31, "second");
+
+        const isHoursAndMinutesWithinLastActivity = begin.isBefore(
+          previousActivityEndMoment
+        );
+
+        if (isHoursAndMinutesWithinLastActivity) {
+          new Notice("Last activity ended within inputted duration");
           return previousActivityEndMoment.add(1, "seconds");
-        } else {
-          return begin;
         }
+        return begin;
       })();
 
       await dailyNote.process(function (data) {
