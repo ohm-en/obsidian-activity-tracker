@@ -88,7 +88,17 @@ export const promptSelection = async function ({ of: items }) {
   return selection;
 };
 
-export const promptInput = async function ({ label, defaultAnswer }) {
-  const input = await tp.system.prompt(label, defaultAnswer, true);
-  return input;
+export const promptInput = async function ({
+  label,
+  defaultAnswer,
+  placeholder = "",
+}) {
+  const quickAddInputPrompt = app?.plugins?.plugins?.quickadd?.api?.inputPrompt;
+  if (quickAddInputPrompt) {
+    const input = await quickAddInputPrompt(label, placeholder, defaultAnswer);
+    return input;
+  } else {
+    const input = await tp.system.prompt(label, defaultAnswer, true);
+    return input;
+  }
 };
