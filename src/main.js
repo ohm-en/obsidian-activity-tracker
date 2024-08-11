@@ -1,3 +1,8 @@
+/**
+ * @global
+ * @type {typeof import('moment')}
+ */
+
 // TODO: require timeline helper as dependancy
 import {
   completeOnGoingActivity,
