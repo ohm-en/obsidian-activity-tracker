@@ -13,24 +13,33 @@ import {
   getWorkflows,
   spawnUserNotice,
 } from "./obsidianUtils.js";
+import { assert } from "./utils.js";
 
 const main = async function () {
   try {
     const dailyNote = await getDailyNote({});
-    const config = getConfigurationFromDaily({ dailyNote });
-    const todaysTimeline = getTimelineFromDaily({ dailyNote });
+    const config = await getConfigurationFromDaily({ dailyNote });
+    const todaysTimeline = getTimelineFromDaily({
+      dailyNote,
+      activity_regex: config.activity_regex,
+    });
 
     const { activities } = todaysTimeline;
 
     const workflows = await getWorkflows({
-      from: workflow_path,
+      from: config.workflow_path,
     });
 
-    const incompletedActivities = activities.filter(isIncompleteActivity);
+    const incompletedActivities = activities.filter((activity) =>
+      isIncompleteActivity({
+        activity,
+        stopPlaceholderTag: config.timeStopTag,
+      }),
+    );
 
     if (incompletedActivities.length > 0) {
       assert(
-        incompletedActivities.length > 1,
+        incompletedActivities.length <= 1,
         "Failure! More than one activity is marked as incomplete!",
       );
       // const ongoingActivity = activities[activities.length - 1];
@@ -54,13 +63,16 @@ const main = async function () {
       const newActivity = await createNewActivity({
         id: (Number(previousActivity?.id) || 0) + 1,
         workflows,
+        timeStartTag: config.timeStartTag,
+        timeStopTag: config.timeStopTag,
       });
       await dailyNote.append({ text: "\n" + newActivity });
     } else {
       new Error("Activities did not parse correctly!");
     }
   } catch (error) {
-    spawnUserNotice(error?.message || error);
+    spawnUserNotice({ message: error?.message || error });
+    console.error(error);
   }
 };
 

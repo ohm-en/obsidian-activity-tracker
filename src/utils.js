@@ -1,4 +1,4 @@
-function assert(condition, message = "Assertion failed") {
+export const assert = function (condition, message = "Assertion failed") {
   if (!condition) {
     if (message instanceof Error) {
       throw message;
@@ -6,9 +6,9 @@ function assert(condition, message = "Assertion failed") {
       throw new Error(message);
     }
   }
-}
+};
 
-const isMomentWithinAnHour = function (initialMoment) {
+export const isMomentWithinAnHour = function (initialMoment) {
   const oneHourAgoMoment = moment().subtract(1, "hours");
   const withinAnHour = oneHourAgoMoment.isBefore(initialMoment) ? true : false;
   return withinAnHour;

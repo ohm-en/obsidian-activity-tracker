@@ -1,9 +1,14 @@
-import { isCursor, promptSelection } from "./obsidianUtils";
+import { isCursor, promptInput, promptSelection } from "./obsidianUtils";
 import { parseTimeline } from "../../obsidian-daily-log-helper/src/text_processing.js";
 import { splitOnFrontMatter } from "./parsing.js";
-import { assert } from "./utils.js";
+import { assert, isMomentWithinAnHour } from "./utils.js";
 
-export const createNewActivity = async function ({ id, workflows }) {
+export const createNewActivity = async function ({
+  id,
+  timeStartTag,
+  timeStopTag,
+  workflows,
+}) {
   const test = workflows.map((workflow) => workflow.name);
   const workflow = await promptSelection({
     of: { label: test, value: workflows },
@@ -29,7 +34,10 @@ export const createNewActivity = async function ({ id, workflows }) {
   return activity;
 };
 
-export const isIncompleteActivity = function (activity) {
+export const isIncompleteActivity = function ({
+  activity,
+  stopPlaceholderTag,
+}) {
   if (!activity.end_time || activity.end_time === stopPlaceholderTag) {
     return true;
   }
@@ -99,8 +107,8 @@ export const completeOnGoingActivity = async function ({
           "HH:mm",
         )}==`,
       )
-      .replace(config.startTimeTag, beginMoment.format("X"))
-      .replace(config.stopTimeTag, endMoment.format("X"));
+      .replace(config.timeStartTag, beginMoment.format("X"))
+      .replace(config.timeStopTag, endMoment.format("X"));
     const newData = yaml + newText;
     return newData;
   });
@@ -122,7 +130,7 @@ export const promptForIdentifer = async function () {
   return identifier;
 };
 
-export const getTimelineFromDaily = function ({ dailyNote }) {
+export const getTimelineFromDaily = function ({ dailyNote, activity_regex }) {
   const timeline = parseTimeline({
     from: dailyNote.text,
     activity_regex,
