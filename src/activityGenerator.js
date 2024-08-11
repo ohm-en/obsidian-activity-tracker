@@ -28,7 +28,7 @@ export const createNewActivity = async function ({
 
   const activity = `- #I ==00:00==-==00:00== (⏳ [[${
     workflow.name
-  }]]) ${formatted_attributes}^id-${id}\n	- :PROPERTIES:\n		- :BEGAN: #BEG\n		- :ENDED: #END\n	- ${timeStamp} ${isCursor(
+  }]]) ${formatted_attributes}^id-${id}\n	- :PROPERTIES: %% fold %%\n		- :BEGAN: ${timeStartTag}\n		- :ENDED: ${timeStopTag}\n	- ${timeStamp} ${isCursor(
     0,
   )}`;
   return activity;
