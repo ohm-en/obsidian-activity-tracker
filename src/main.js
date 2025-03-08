@@ -20,7 +20,7 @@ import {
 } from "./obsidianUtils.js";
 import { assert } from "./utils.js";
 
-const main = async function () {
+export const main = async function ({ useIntervalTracking = false }) {
   try {
     const dailyNote = await getDailyNote({});
     const config = await getConfigurationFromDaily({ dailyNote });
@@ -38,7 +38,7 @@ const main = async function () {
     const incompletedActivities = activities.filter((activity) =>
       isIncompleteActivity({
         activity,
-        stopPlaceholderTag: config.timeStopTag,
+        stopPlaceholderTag: config.timeStopPlaceholderTag,
       }),
     );
 
@@ -47,12 +47,18 @@ const main = async function () {
         incompletedActivities.length <= 1,
         "Failure! More than one activity is marked as incomplete!",
       );
-      // const ongoingActivity = activities[activities.length - 1];
-      const previousActivity = activities[activities.length - 2] || {};
+      const ongoingActivity = activities.at(-1);
+      const previousActivity = activities.at(-2) || {};
 
-      const [beginMoment, endMoment] = await getActivityMoments({
-        basedOn: moment.unix(previousActivity.end_time),
-      });
+      const ongoingActivityBeginMoment = moment.unix(
+        ongoingActivity.begin_time,
+      );
+
+      const [beginMoment, endMoment] = ongoingActivityBeginMoment.isValid()
+        ? [ongoingActivityBeginMoment, moment()]
+        : await getActivityMoments({
+            basedOn: moment.unix(previousActivity.end_time),
+          });
 
       const identifier = await promptForIdentifer();
 
@@ -68,8 +74,10 @@ const main = async function () {
       const newActivity = await createNewActivity({
         id: (Number(previousActivity?.id) || 0) + 1,
         workflows,
-        timeStartTag: config.timeStartTag,
-        timeStopTag: config.timeStopTag,
+        timeStart: useIntervalTracking
+          ? moment().format("X")
+          : config.timeStartPlaceholderTag,
+        timeStop: config.timeStopPlaceholderTag,
       });
       await dailyNote.append({ text: "\n" + newActivity });
     } else {
@@ -80,5 +88,3 @@ const main = async function () {
     console.error(error);
   }
 };
-
-main();

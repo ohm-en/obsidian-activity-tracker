@@ -5,8 +5,8 @@ import { assert, isMomentWithinAnHour } from "./utils.js";
 
 export const createNewActivity = async function ({
   id,
-  timeStartTag,
-  timeStopTag,
+  timeStart,
+  timeStop,
   workflows,
 }) {
   const test = workflows.map((workflow) => workflow.name);
@@ -28,7 +28,7 @@ export const createNewActivity = async function ({
 
   const activity = `- #I ==00:00==-==00:00== (⏳ [[${
     workflow.name
-  }]]) ${formatted_attributes}^id-${id}\n	- :PROPERTIES: %% fold %%\n		- :BEGAN: ${timeStartTag}\n		- :ENDED: ${timeStopTag}\n	- ${timeStamp} ${isCursor(
+  }]]) ${formatted_attributes}^id-${id}\n	- :PROPERTIES: %% fold %%\n		- :BEGAN: ${timeStart}\n		- :ENDED: ${timeStop}\n	- ${timeStamp} ${isCursor(
     0,
   )}`;
   return activity;
@@ -107,8 +107,8 @@ export const completeOnGoingActivity = async function ({
           "HH:mm",
         )}==`,
       )
-      .replace(config.timeStartTag, beginMoment.format("X"))
-      .replace(config.timeStopTag, endMoment.format("X"));
+      .replace(config.timeStartPlaceholderTag, beginMoment.format("X"))
+      .replace(config.timeStopPlaceholderTag, endMoment.format("X"));
     const newData = yaml + newText;
     return newData;
   });
@@ -158,13 +158,13 @@ export const getConfigurationFromDaily = async function ({ dailyNote }) {
     "Please define time_stop_placeholder_tag in your daily note.",
   );
 
-  const timeStartTag = "#" + time_start_placeholder_tag.trim();
-  const timeStopTag = "#" + time_stop_placeholder_tag.trim();
+  const timeStartPlaceholderTag = "#" + time_start_placeholder_tag.trim();
+  const timeStopPlaceholderTag = "#" + time_stop_placeholder_tag.trim();
 
   return {
     workflow_path,
-    timeStartTag,
-    timeStopTag,
+    timeStartPlaceholderTag,
+    timeStopPlaceholderTag,
     activity_regex,
   };
 };

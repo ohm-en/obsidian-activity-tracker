@@ -5,7 +5,7 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "build": "npx rollup ./src/main.js -c rollup.config.js"
+    "build": "npx rollup -c rollup.config.js"
   },
   "author": "ohm-en",
   "license": "ISC",
