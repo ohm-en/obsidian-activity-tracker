@@ -45,7 +45,7 @@ export const getDailyNote = async function ({
   };
 
   const refresh = async function () {
-    text = await app.vault.read(tFile);
+    text = await getLatestFileContent(tFile);
   };
 
   await refresh();
@@ -101,4 +101,18 @@ export const promptInput = async function ({
     const input = await tp.system.prompt(label, defaultAnswer, true);
     return input;
   }
+};
+
+export const getLatestFileContent = async function (tFile) {
+  const activeLeaf = app.workspace.activeLeaf;
+
+  if (activeLeaf && activeLeaf.view) {
+    const activeFile = activeLeaf.view.file;
+
+    if (activeFile && activeFile === tFile) {
+      return activeLeaf.view.editor.getValue();
+    }
+  }
+
+  return await app.vault.read(tFile);
 };
