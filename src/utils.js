@@ -13,3 +13,11 @@ export const isMomentWithinAnHour = function (initialMoment) {
   const withinAnHour = oneHourAgoMoment.isBefore(initialMoment) ? true : false;
   return withinAnHour;
 };
+
+export const isNotEmptyString = function (string) {
+  return typeof string === 'string' && string != '';
+};
+
+export const isNonEmptyArray = function (arrayCandidate) {
+  return Array.isArray(arrayCandidate) && arrayCandidate.length > 0;
+}

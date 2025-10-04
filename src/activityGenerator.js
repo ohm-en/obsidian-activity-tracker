@@ -1,7 +1,7 @@
 import { isCursor, promptInput, promptSelection } from "./obsidianUtils";
 import { parseTimeline } from "../../obsidian-daily-log-helper/src/text_processing.js";
 import { splitOnFrontMatter } from "./parsing.js";
-import { assert, isMomentWithinAnHour } from "./utils.js";
+import { assert, isMomentWithinAnHour, isNonEmptyArray, isNonEmptyString } from "./utils.js";
 
 export const createNewActivity = async function ({
   id,
@@ -148,7 +148,7 @@ export const getConfigurationFromDaily = async function ({ dailyNote }) {
   const activity_regex = new RegExp(dailyNote.yaml.activity_regex, "g");
 
   assert(activity_regex, "Please define activity_regex in your daily note.");
-  assert(workflow_path, "Please define workflow_path in your daily note.");
+  assert(isNonEmptyString(workflow_path), "Please define workflow_path as a text property in your daily note.");
   assert(
     time_start_placeholder_tag,
     "Please define time_start_placeholder_tag in your daily note.",
@@ -161,10 +161,12 @@ export const getConfigurationFromDaily = async function ({ dailyNote }) {
   const timeStartPlaceholderTag = "#" + time_start_placeholder_tag.trim();
   const timeStopPlaceholderTag = "#" + time_stop_placeholder_tag.trim();
 
-  return {
+  const config = {
     workflow_path,
     timeStartPlaceholderTag,
     timeStopPlaceholderTag,
     activity_regex,
   };
+
+  return config;
 };

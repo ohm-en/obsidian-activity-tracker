@@ -6,10 +6,12 @@
  */
 
 export const spawnUserNotice = function ({ message }) {
+import { assert, isNonEmptyArray } from "./utils.js";
+export const spawnUserNotice = function ({ message } = {}) {
   new Notice(message);
 };
 
-const getTFile = function ({ from: filePath }) {
+const getTFile = function ({ from: filePath } = {}) {
   const tFile = app.vault.getAbstractFileByPath(filePath);
   return tFile;
 };
@@ -24,9 +26,13 @@ export const isCursor = function (n) {
 export const getDailyNote = async function ({
   from_date = moment(),
   dailyNotePathSchema = "[Logs]/YYYY/MM - MMMM (Y)/Y-MM-DD[.md]",
-}) {
+} = {}) {
   const notePath = from_date.format(dailyNotePathSchema);
   const tFile = getTFile({ from: notePath });
+
+  // TODO: Create isTFile typeguard
+  assert(tFile, `Daily at '${notePath}' could not be found`);
+  
   let text = "";
 
   const metadata = (await app.metadataCache.getFileCache(tFile)) || {};
@@ -61,8 +67,20 @@ export const getDailyNote = async function ({
   });
 };
 
-export const getWorkflows = async function ({ from: path }) {
-  const notes = await app.vault.fileMap[path].children;
+const ensureFolderExists = async function (path) {
+  const folder = app.vault.getAbstractFileByPath(path);
+
+  if (!folder) {
+    await app.vault.createFolder(path);
+    return app.vault.getAbstractFileByPath(path);
+  }
+
+  return folder;
+}
+
+export const getWorkflows = async function ({ from: path } = {}) {
+  const folder = await ensureFolderExists(path);
+  const notes = folder.children;
   const metadataArray = notes.map(function (note) {
     const noteName = note.basename;
     // TODO: is note itself a tfile?
