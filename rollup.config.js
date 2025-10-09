@@ -1,20 +1,10 @@
 export default [
   {
-    input: "src/main-duration-tracking.js",
+    input: "src/main-plugin.js",
+    external: ['obsidian'],
     output: {
-      file: "example-vault/template_track_duration.md",
+      file: "example-vault/.obsidian/plugins/src/main.js",
       format: "cjs",
-      banner: "<%-*",
-      footer: "_%>",
-    },
-  },
-  {
-    input: "src/main-interval-tracking.js",
-    output: {
-      file: "example-vault/template_track_interval.md",
-      format: "cjs",
-      banner: "<%-*",
-      footer: "_%>",
     },
   },
 ];

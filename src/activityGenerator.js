@@ -9,9 +9,12 @@ export const createNewActivity = async function ({
   timeStop,
   workflows,
 }) {
-  const test = workflows.map((workflow) => workflow.name);
+  const workflowOptions = workflows.map(function(workflow) {
+    return { value: workflow, label: workflow.name };
+  });
+  
   const workflow = await promptSelection({
-    of: { label: test, value: workflows },
+    of: workflowOptions,
   });
 
   const formatted_attributes =
@@ -123,8 +126,12 @@ export const promptForIdentifer = async function () {
     "🤬", // Seething Rage
   ];
 
+  const identifierOptions = identifiers.map(function(identifier) {
+    return { value: identifier, label: identifier };
+  });
+
   const identifier = await promptSelection({
-    of: { label: identifiers, value: identifiers },
+    of: identifierOptions,
   });
 
   return identifier;

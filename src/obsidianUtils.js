@@ -5,8 +5,9 @@
  * NOTE: Will not work outside of ObsidianMD's runtime
  */
 
-export const spawnUserNotice = function ({ message }) {
 import { assert, isNonEmptyArray } from "./utils.js";
+import { SuggestModal, Modal, Setting } from 'obsidian';
+
 export const spawnUserNotice = function ({ message } = {}) {
   new Notice(message);
 };
@@ -96,30 +97,93 @@ export const getWorkflows = async function ({ from: path } = {}) {
   return metadataArray;
 };
 
-export const promptSelection = async function ({ of: items }) {
-  // TODO: assert items = { label, value }
-  const selection = await tp.system.suggester(
-    items.label,
-    items.value || items.label,
-    true,
-  );
-  return selection;
-};
-
-export const promptInput = async function ({
-  label,
-  defaultAnswer,
-  placeholder = "",
-}) {
-  const quickAddInputPrompt = app?.plugins?.plugins?.quickadd?.api?.inputPrompt;
-  if (quickAddInputPrompt) {
-    const input = await quickAddInputPrompt(label, placeholder, defaultAnswer);
-    return input;
-  } else {
-    const input = await tp.system.prompt(label, defaultAnswer, true);
-    return input;
+// TODO: Probably move the model
+class SelectionModal extends SuggestModal {
+  constructor(app, items) {
+    super(app);
+    this.items = items; // expected: [{ label, value }, ...]
   }
-};
+
+  getSuggestions(query) {
+    const lower = query.toLowerCase();
+    return this.items.filter(item => item.label.toLowerCase().includes(lower));
+  }
+
+  renderSuggestion(item, el) {
+    el.createEl('div', { text: item.label });
+  }
+
+  onChooseSuggestion(item, evt) {
+    this.resolve(item.value ?? item.label);
+  }
+
+  openAndGetValue() {
+    return new Promise((resolve) => {
+      this.resolve = resolve;
+      this.open();
+    });
+  }
+}
+
+export async function promptSelection({ of: items = [] } = {}) {
+  assert(isNonEmptyArray(items), "Cannot prompt for a selection of no items");
+  const modal = new SelectionModal(app, items);
+  const selection = await modal.openAndGetValue();
+  return selection;
+}
+
+// TODO: Probably move the model
+class InputModal extends Modal {
+  constructor(app, { label, placeholder = '', defaultAnswer = '' }) {
+    super(app);
+    this.label = label;
+    this.placeholder = placeholder;
+    this.defaultAnswer = defaultAnswer;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+
+    contentEl.createEl('h2', { text: this.label });
+
+    let value = this.defaultAnswer;
+
+    new Setting(contentEl)
+      .addText((text) => {
+        text.setPlaceholder(this.placeholder)
+          .setValue(this.defaultAnswer)
+          .onChange((v) => { value = v; });
+      })
+      .addButton((btn) =>
+        btn.setButtonText('OK')
+          .setCta()
+          .onClick(() => {
+            this.close();
+            this.resolve(value);
+          })
+      );
+  }
+
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+
+  openAndGetValue() {
+    return new Promise((resolve) => {
+      this.resolve = resolve;
+      this.open();
+    });
+  }
+}
+
+export async function promptInput({ label, defaultAnswer, placeholder } = {}) {
+  const modal = new InputModal(app, { label, defaultAnswer, placeholder });
+  const result = await modal.openAndGetValue();
+  return result;
+}
+
 
 export const getLatestFileContent = async function (tFile) {
   const activeLeaf = app.workspace.activeLeaf;

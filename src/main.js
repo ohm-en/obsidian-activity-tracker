@@ -20,9 +20,9 @@ import {
 } from "./obsidianUtils.js";
 import { assert } from "./utils.js";
 
-export const main = async function ({ useIntervalTracking = false }) {
+export const main = async function ({ dailyNotePathSchema, useIntervalTracking = false }) {
   try {
-    const dailyNote = await getDailyNote({});
+    const dailyNote = await getDailyNote({ dailyNotePathSchema });
     const config = await getConfigurationFromDaily({ dailyNote });
     const todaysTimeline = getTimelineFromDaily({
       dailyNote,

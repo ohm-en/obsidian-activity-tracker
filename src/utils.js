@@ -14,7 +14,7 @@ export const isMomentWithinAnHour = function (initialMoment) {
   return withinAnHour;
 };
 
-export const isNotEmptyString = function (string) {
+export const isNonEmptyString = function (string) {
   return typeof string === 'string' && string != '';
 };
 

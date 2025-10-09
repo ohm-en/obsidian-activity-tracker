@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-activity-tracker",
+  "name": "Obsidian Activity Tracker",
+  "version": "0.0.1",
+  "minAppVersion": "1.5.0",
+  "description": "Adds two commands: Track Interval and Track Duration.",
+  "author": "ohm-en",
+  "authorUrl": "https://github.com/ohm-en",
+  "isDesktopOnly": false
+}
