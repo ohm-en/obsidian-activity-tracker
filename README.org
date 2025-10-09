@@ -3,38 +3,26 @@
 :END:
 #+title: Obsidian Timeline Tracker
 
+* Description
+This is a work in progress plugin for Obsidian used to track how you spend your time with associated notes and metadata.
 
-**** Description
-This is a work in progress template for the Templater Plugin within ObsidianMD. It's job to to track daily activities as seen [[https://ohm.one/how-to-track-your-every-single-minute/][here]].
+* Setup
+1. Set the "Daily note path schema" setting to match how your daily notes are stored. The syntax can be found in the moment.js [[https://momentjs.com/docs/#/displaying/format/][documentation]].
+2. Decided and create a directory for your workflows (aka WFs). Each file in this directory will be treated as a WF and you will be prompted for it upon making an activity. Ensure you have at least one. At this time, a WF is a required piece of metadata.
+3. Optionally, you can set default attribute fields for each WF with the =attributes= frontmatter array variable. An attribute is additionally metadata. These don't currently support dynamic prompting like the WF.
+   
+Additionally, each daily note will require the following properties:
+- workflow_path: a string containing your workflow directory (i.e, "%%, "%/Workflow", "%/Work")
+- activity_regex: a regex pattern for parsing
+    I recommend this as a sane default.
+    #+begin_src regex
+    - #(?<emoji>\S+) (?<time>==\d\d:\d\d==-==\d\d:\d\d==) (?<workflow_metadata>\(.{0,2}\s+.*\)+)\s+\^id-(?<id>\d{1,})\n\s- :PROPERTIES:\n\s\s- :BEGAN: (?<begin_time>\d{10}|#BEG)[ 	]*\n\s\s- :ENDED: (?<end_time>\d{10}|#END)[ 	]*(?:\n\s- (?<notes>.*))?(?<extra_notes>(?:\n\s{2,}- .*)*)?
+    #+end_src
 
-**** Status
-The script currently works, but has yet to be configured appropiately for the average user. Expect users and idiosyncrasies.
+    Note here that the `(?<VAR>)` indicates a named capture group. Currently, id, begin_time, and end_time are required.
+- time_start_placeholder_tag: a tag (without `#`) that will act as placeholder for the start times of your activities
+- time_stop_placeholder_tag: a tag (without `#`) that will act as placeholder for the end times of your activities
 
-**** Prerequisites 
-- ObsidianMD 
-- Templater (with a defined templates folder)
-- Daily Notes (built-in)
+I recommend supplying these fields from a template.
 
-****  Setup
-1. Copy the template.md into your Templater directory
-2. (Optional) Edit =dailyNotePathSchema= variable to match your Daily Note configuration
-   By default it's set to =[Logs]/YYYY/MM - MMMM (Y)/Y-MM-DD[.md]= which is equivalent to setting Daily Notes to the following:
-   - Date Format: YYYY/MM \-\ MMMM \(Y\)/Y-MM-DD
-   - New File Location: "Logs"
-
-   The brackets (=[]=) around =Logs= and =.md= are to escape the text from processing. Use this syntax to reference folders or non-date-related formats. 
-3. Define a "workflow" directory
-   In this directory, every file will be treated as a workflow for you to select from. Additionally, you can set default attribute fields with the =attributes= frontmatter array variable.
-4. Add metadata to your daily note (see =dailyNote.md= for example)
-   Each daily note will require the following:
-   - workflow_path: a string containing your workflow directory (i.e, "%%, "%/Workflow", "%/Work")
-   - activity_regex: a regex pattern for parsing
-     Set this to the following unless you know what you're doing:
-     #+begin_src regex
-       - #(?<emoji>\S+) (?<time>==\d\d:\d\d==-==\d\d:\d\d==) (?<workflow_metadata>\(.{0,2}\s+.*\)+)\s+\^id-(?<id>\d{1,})\n\s- :PROPERTIES:\n\s\s- :BEGAN: (?<begin_time>\d{10}|#BEG)[ 	]*\n\s\s- :ENDED: (?<end_time>\d{10}|#END)[ 	]*(?:\n\s- (?<notes>.*))?(?<extra_notes>(?:\n\s{2,}- .*)*)?
-     #+end_src
-
-     Note here that the `(?<VAR>)` indictates a named capture group. Currently, id, begin_time, and end_time are required.
-   - time_start_placeholder_tag: a tag (without `#`) that will act as placeholder for the start times of your activities
-   - time_stop_placeholder_tag: a tag (without `#`) that will act as placeholder for the end times of your activities
-5. And try it out by running the template 
+Notably, a few of these properties will likely be moved to the plugin settings in the near future; however, you can expect "activity_regex" to remain in the daily note. It allows parsing old daily notes without having to migrate manually.
