@@ -1,6 +1,5 @@
 import { isCursor, promptInput, promptSelection } from "./obsidianUtils";
-import { parseTimeline } from "../../obsidian-daily-log-helper/src/text_processing.js";
-import { splitOnFrontMatter } from "./parsing.js";
+import { parseTimeline, splitOnFrontMatter } from "./parsing.js";
 import { assert, isMomentWithinAnHour, isNonEmptyString } from "./utils.js";
 import {
   activityTemplateToRegex,
