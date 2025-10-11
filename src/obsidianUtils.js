@@ -6,7 +6,7 @@
  */
 
 import { assert, isNonEmptyArray } from "./utils.js";
-import { SuggestModal, Modal, Setting } from 'obsidian';
+import { SuggestModal, Modal, Setting } from "obsidian";
 
 export const spawnUserNotice = function ({ message } = {}) {
   new Notice(message);
@@ -17,6 +17,7 @@ const getTFile = function ({ from: filePath } = {}) {
   return tFile;
 };
 
+// TODO: This should be re-implemented without leveraging tp.
 export const isCursor = function (n) {
   if (app.isMobile === false) {
     return `\<%tp.file.cursor(${n})%\>`;
@@ -33,7 +34,7 @@ export const getDailyNote = async function ({
 
   // TODO: Create isTFile typeguard
   assert(tFile, `Daily at '${notePath}' could not be found`);
-  
+
   let text = "";
 
   const metadata = (await app.metadataCache.getFileCache(tFile)) || {};
@@ -77,7 +78,7 @@ const ensureFolderExists = async function (path) {
   }
 
   return folder;
-}
+};
 
 export const getWorkflows = async function ({ from: path } = {}) {
   const folder = await ensureFolderExists(path);
@@ -106,11 +107,13 @@ class SelectionModal extends SuggestModal {
 
   getSuggestions(query) {
     const lower = query.toLowerCase();
-    return this.items.filter(item => item.label.toLowerCase().includes(lower));
+    return this.items.filter((item) =>
+      item.label.toLowerCase().includes(lower),
+    );
   }
 
   renderSuggestion(item, el) {
-    el.createEl('div', { text: item.label });
+    el.createEl("div", { text: item.label });
   }
 
   onChooseSuggestion(item, evt) {
@@ -134,7 +137,7 @@ export async function promptSelection({ of: items = [] } = {}) {
 
 // TODO: Probably move the model
 class InputModal extends Modal {
-  constructor(app, { label, placeholder = '', defaultAnswer = '' }) {
+  constructor(app, { label, placeholder = "", defaultAnswer = "" }) {
     super(app);
     this.label = label;
     this.placeholder = placeholder;
@@ -145,23 +148,27 @@ class InputModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
 
-    contentEl.createEl('h2', { text: this.label });
+    contentEl.createEl("h2", { text: this.label });
 
     let value = this.defaultAnswer;
 
     new Setting(contentEl)
       .addText((text) => {
-        text.setPlaceholder(this.placeholder)
+        text
+          .setPlaceholder(this.placeholder)
           .setValue(this.defaultAnswer)
-          .onChange((v) => { value = v; });
+          .onChange((v) => {
+            value = v;
+          });
       })
       .addButton((btn) =>
-        btn.setButtonText('OK')
+        btn
+          .setButtonText("OK")
           .setCta()
           .onClick(() => {
             this.close();
             this.resolve(value);
-          })
+          }),
       );
   }
 
@@ -183,7 +190,6 @@ export async function promptInput({ label, defaultAnswer, placeholder } = {}) {
   const result = await modal.openAndGetValue();
   return result;
 }
-
 
 export const getLatestFileContent = async function (tFile) {
   const activeLeaf = app.workspace.activeLeaf;

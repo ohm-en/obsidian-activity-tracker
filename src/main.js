@@ -20,7 +20,10 @@ import {
 } from "./obsidianUtils.js";
 import { assert } from "./utils.js";
 
-export const main = async function ({ dailyNotePathSchema, useIntervalTracking = false }) {
+export const main = async function ({
+  dailyNotePathSchema,
+  useIntervalTracking = false,
+}) {
   try {
     const dailyNote = await getDailyNote({ dailyNotePathSchema });
     const config = await getConfigurationFromDaily({ dailyNote });
@@ -78,6 +81,7 @@ export const main = async function ({ dailyNotePathSchema, useIntervalTracking =
           ? moment().format("X")
           : config.timeStartPlaceholderTag,
         timeStop: config.timeStopPlaceholderTag,
+        activityTemplate: config.activity_template,
       });
       await dailyNote.append({ text: "\n" + newActivity });
     } else {
