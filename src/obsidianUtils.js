@@ -143,7 +143,7 @@ class InputModal extends Modal {
     this.placeholder = placeholder;
     this.defaultAnswer = defaultAnswer;
   }
-
+  
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
@@ -152,6 +152,11 @@ class InputModal extends Modal {
 
     let value = this.defaultAnswer;
 
+    const submit = () => {
+      this.close();
+      this.resolve(value);
+    };
+    
     new Setting(contentEl)
       .addText((text) => {
         text
@@ -160,15 +165,18 @@ class InputModal extends Modal {
           .onChange((v) => {
             value = v;
           });
+        text.inputEl.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          }
+        });
       })
       .addButton((btn) =>
         btn
           .setButtonText("OK")
           .setCta()
-          .onClick(() => {
-            this.close();
-            this.resolve(value);
-          }),
+          .onClick(submit),
       );
   }
 
