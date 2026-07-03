@@ -45,7 +45,7 @@ export const createNewActivity = async function ({
 
   const templateVariableValueMap = {
     emoji: undefined_emoji,
-    time: undefined_time,
+    time_range: undefined_time,
     workflow_metadata: String.raw`(⏳ [[${workflow.name}]]) ${formatted_attributes}`,
     id: String.raw`${id}`,
     begin_time: String.raw`${timeStart}`,

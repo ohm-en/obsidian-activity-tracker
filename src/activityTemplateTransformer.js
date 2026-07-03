@@ -86,7 +86,7 @@ const objectEntryToMatchGroup = function ([key, value]) {
 // TODO: The group names here are legacy for my needs. Set more sane defaults for other users. (Or make it configurable.)
 const templateRegexMap = {
   emoji: String.raw`\S+`,
-  time: String.raw`==\d\d:\d\d==-==\d\d:\d\d==`,
+  time_range: String.raw`==\d\d:\d\d==-==\d\d:\d\d==`,
   workflow_metadata: String.raw`\(.{0,2}\s+.*\)+`, // legacy
   id: String.raw`\d{1,}`,
 
