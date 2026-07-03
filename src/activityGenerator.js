@@ -38,7 +38,7 @@ export const createNewActivity = async function ({
             const parsed = `(${attribute} ${isCursor(i + 1)})`;
             return parsed;
           })
-          .join(" ") + " "
+          .join(" ")
       : "";
 
   const timeStamp = moment().format("==HH:mm==");
