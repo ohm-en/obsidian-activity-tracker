@@ -20,7 +20,7 @@ class ActivityTrackerSettingTab extends PluginSettingTab {
     // TODO: Dynamically update a reference to the current location so the syntax is clear to the user
     new Setting(containerEl)
       .setName('Daily note path schema')
-      .setDesc(`Moment.js templae for where daily notes are stored (e.g., ${DEFAULT_SETTINGS.dailyNotePathSchema}).`)
+      .setDesc(`Moment.js template for where daily notes are stored (e.g., ${DEFAULT_SETTINGS.dailyNotePathSchema}).`)
       .addText((text) =>
         text
           .setPlaceholder(DEFAULT_SETTINGS.dailyNotePathSchema)
