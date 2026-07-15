@@ -84,20 +84,27 @@ export const getActivityMoments = async function ({
     ? "0"
     : await promptInput({ label: "Hours: " });
 
+  const isBlankHours = hours.trim() == '';
+
   const isHoursWithinLastActivity = moment()
     .subtract(Number(hours), "hours")
     .isBefore(previousActivityEndMoment);
 
-  const minutes = isHoursWithinLastActivity
+  const minutes = isHoursWithinLastActivity || isBlankHours
     ? undefined
     : await promptInput({
         label: "Minutes: ",
-      });
+    });
+
+  const isBlankMinutes = minutes?.trim() == '';
 
   const endMoment = moment();
 
   const beginMoment = (function () {
-    if (isHoursWithinLastActivity) {
+    if (isBlankHours || isBlankMinutes) {
+      new Notice("No duration specified, so this will follow the last activity end");
+      return previousActivityEndMoment.add(1, "seconds");
+    } else if (isHoursWithinLastActivity) {
       new Notice("Last activity ended within inputted hours");
       return previousActivityEndMoment.add(1, "seconds");
     }
