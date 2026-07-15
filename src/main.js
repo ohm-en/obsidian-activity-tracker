@@ -13,6 +13,7 @@ import {
   isIncompleteActivity,
   promptForIdentifer,
 } from "./activityGenerator.js";
+import { runSafely } from "./errorHandling.js";
 import {
   getDailyNote,
   getWorkflows,
@@ -24,7 +25,7 @@ export const main = async function ({
   dailyNotePathSchema,
   useIntervalTracking = false,
 }) {
-  try {
+  return runSafely(async function() {
     const dailyNote = await getDailyNote({ dailyNotePathSchema });
     const config = await getConfigurationFromDaily({ dailyNote });
     const todaysTimeline = getTimelineFromDaily({
@@ -87,8 +88,5 @@ export const main = async function ({
     } else {
       new Error("Activities did not parse correctly!");
     }
-  } catch (error) {
-    spawnUserNotice({ message: error?.message || error });
-    console.error(error);
-  }
+  });
 };
