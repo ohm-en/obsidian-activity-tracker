@@ -1,6 +1,7 @@
 import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { main } from "./main";
 import { insertAtCursor } from './obsidianUtils';
+import { runSafely } from './errorHandling';
 
 const DEFAULT_SETTINGS = {
   dailyNotePathSchema: '[daily]/YYYY/MM/YYYY-MM-dd[.md]'
@@ -62,10 +63,11 @@ class ActivityTrackerPlugin extends Plugin {
   }
 
   insertTimestamp() {
-    // TODO: better error handlings
     // TODO: make timestamp configurable (apply to template code as well)
-    const timestamp = moment().format("==HH:mm==");
-    insertAtCursor(timestamp + " ");
+    runSafely(() => {
+      const timestamp = moment().format("==HH:mm==");
+      insertAtCursor(timestamp + " ");
+    });
   }
 
   trackInterval() {
