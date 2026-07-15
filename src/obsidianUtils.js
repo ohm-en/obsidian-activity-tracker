@@ -212,3 +212,34 @@ export const getLatestFileContent = async function (tFile) {
 
   return await app.vault.read(tFile);
 };
+
+
+const isMarkdownLeaf = function(leaf) {
+  if (leaf?.view?.getViewType?.() !== "markdown") return false;
+  return true;
+}
+
+const getBestMarkdownLeaf = function() {
+  const leaf = app.workspace.activeLeaf;
+  if (isMarkdownLeaf(leaf)) return leaf;
+
+	const mostRecentLeaf = app.workspace.getMostRecentLeaf();
+	if (isMarkdownLeaf(mostRecentLeaf)) return mostRecentLeaf;
+
+	return undefined;
+}
+
+export const insertAtCursor = function(text) {
+  const leaf = getBestMarkdownLeaf();
+  if (!leaf) {
+		new Notice("Cannot insert into non-markdown window");
+	  return;
+	}
+
+  const view = leaf.view;
+  const editor = view && view.editor;
+  if (!editor) return;
+
+  editor.focus();
+  editor.replaceSelection(text);
+}
